@@ -145,4 +145,33 @@ private:
   void _release_hazard_pointer(int hazard_slot) {
     bclx::aput_sync(nullptr, this->_d_hazard_pointers + hazard_slot);
   }
+
+  inline bclx::gptr<uint64_t> _get_gptr_to_head_of_segment(bclx::gptr<segment_t> ptr) {
+    bclx::gptr<uint64_t> head_ptr;
+    head_ptr.rank = ptr.rank;
+    head_ptr.ptr = ptr.ptr;
+    return head_ptr;
+  }
+
+  inline bclx::gptr<uint64_t> _get_gptr_to_tail_of_segment(bclx::gptr<segment_t> ptr) {
+    bclx::gptr<uint64_t> tail_ptr;
+    tail_ptr.rank = ptr.rank;
+    tail_ptr.ptr = ptr.ptr + offsetof(segment_t, tail);
+    return tail_ptr;
+  }
+
+  inline bclx::gptr<markable_gptr<segment_t>>
+  _get_gptr_to_next_of_segment(bclx::gptr<segment_t> ptr) {
+    bclx::gptr<markable_gptr<segment_t>> next_ptr;
+    next_ptr.rank = ptr.rank;
+    next_ptr.ptr = ptr.ptr + offsetof(segment_t, next);
+    return next_ptr;
+  }
+
+  inline bclx::gptr<uint64_t> _get_gptr_to_data_of_segment(bclx::gptr<segment_t> ptr) {
+    bclx::gptr<bclx::gptr<data_t>> data_ptr;
+    data_ptr.rank = ptr.rank;
+    data_ptr.ptr = ptr.ptr + offsetof(segment_t, data);
+    return data_ptr;
+  }
 };
