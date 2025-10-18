@@ -10,6 +10,7 @@
 #include "bcl/backends/mpi/atomics.hpp"
 #include "bcl/backends/mpi/backend.hpp"
 #include "bcl/backends/mpi/comm.hpp"
+#include "bcl/backends/mpi/ops.hpp"
 #include "bcl/core/alloc.hpp"
 #include "bcl/core/teams.hpp"
 #include "bclx/backends/mpi/comm.hpp"
@@ -345,8 +346,17 @@ private:
     return m_ptr;
   }
 
-  void _release_hazard_pointer(int hazard_slot) {
-    bclx::aput_sync(nullptr, this->_d_hazard_pointers + hazard_slot);
+  void _release_hazard_pointer(bclx::gptr<segment_t> ptr) {
+    bclx::gptr<segment_t> ptr0 = bclx::aget_sync(this->_d_hazard_pointers);
+    bclx::gptr<segment_t> ptr1 = bclx::aget_sync(this->_d_hazard_pointers + 1);
+    if (ptr0 == ptr) {
+      bclx::aput_sync(nullptr, this->_d_hazard_pointers);
+    } else if (ptr1 == ptr) {
+      bclx::aput_sync(nullptr, this->_d_hazard_pointers + 1);
+    } else {
+      printf("release a non-reserved pointer!");
+      exit(1);
+    }
   }
 
   inline bclx::gptr<uint64_t>
