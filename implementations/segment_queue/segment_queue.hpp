@@ -21,17 +21,16 @@ template <typename T> struct markable_gptr {
   bclx::gptr<T> _inner;
 };
 
-template <typename T> constexpr bool get_marker(markable_gptr<T> ptr) {
+template <typename T> bool get_marker(markable_gptr<T> ptr) {
   return ptr._inner & (uint64_t)1;
 }
 
-template <typename T> constexpr bclx::gptr<T> get_ptr(markable_gptr<T> ptr) {
+template <typename T> bclx::gptr<T> get_ptr(markable_gptr<T> ptr) {
   return ptr._inner & ~(uint64_t)1;
 }
 
 template <typename T>
-constexpr markable_gptr<T> create_markable_ptr(bclx::gptr<T> ptr,
-                                               bool marker = false) {
+markable_gptr<T> create_markable_ptr(bclx::gptr<T> ptr, bool marker = false) {
   if (marker) {
     ptr.ptr = ptr.ptr | (uint64_t)1;
   }
@@ -40,8 +39,8 @@ constexpr markable_gptr<T> create_markable_ptr(bclx::gptr<T> ptr,
 
 template <typename data_t> class SegmentQueue {
   static constexpr MPI_Aint SEGMENT_CAPACITY = 2048;
-  static constexpr bclx::gptr<data_t> BOTTOM_PTR = nullptr;
-  static constexpr bclx::gptr<data_t> TOP_PTR = bclx::gptr<data_t>(0, 2);
+  inline static const bclx::gptr<data_t> BOTTOM_PTR = nullptr;
+  inline static const bclx::gptr<data_t> TOP_PTR = bclx::gptr<data_t>(0, 2);
 
   struct segment_t {
     uint64_t head;
