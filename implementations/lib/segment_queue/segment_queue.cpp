@@ -183,7 +183,44 @@ public:
     return true;
   }
 
-  bool dequeue(data_t *output) {}
+  bool dequeue(data_t *output) {
+  retry:
+    bclx::gptr<segment_t> current_segment =
+        this->_reserve(this->_d_head_segment);
+    if (current_segment == nullptr) {
+      return false;
+    }
+  next:
+    uint64_t head =
+        bclx::fao_sync(_get_gptr_to_head_of_segment(current_segment), 1,
+                       BCL::plus<uint64_t>{});
+    if (head >= SEGMENT_CAPACITY) {
+      markable_gptr<segment_t> next_segment = this->_reserve_if_not_marked(
+          _get_gptr_to_next_of_segment(current_segment));
+      bclx::compare_and_swap_sync(this->_d_head_segment, current_segment,
+                                  get_ptr(next_segment));
+      if (get_ptr(next_segment) == nullptr) {
+        this->_release_hazard_pointer(current_segment);
+        return false;
+      }
+      if (get_marker(next_segment)) {
+        this->_release_hazard_pointer(current_segment);
+        this->_release_hazard_pointer(get_ptr(next_segment));
+        goto retry;
+      }
+      this->_release_hazard_pointer(current_segment);
+      current_segment = get_ptr(next_segment);
+      goto next;
+    }
+    this->_release_hazard_pointer(current_segment);
+    bclx::gptr<data_t> data_ptr = bclx::swap_sync(
+        _get_gptr_to_data_of_segment(current_segment) + head, TOP_PTR);
+    if (data_ptr == BOTTOM_PTR) {
+      return false;
+    }
+    *output = bclx::rread_sync(data_ptr);
+    return true;
+  }
 
 private:
   void _try_reclaim_segments() {
