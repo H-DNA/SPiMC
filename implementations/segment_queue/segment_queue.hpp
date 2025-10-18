@@ -201,13 +201,13 @@ public:
     }
   next:
     uint64_t head =
-        bclx::fao_sync(_get_gptr_to_head_of_segment(current_segment), 1,
-                       BCL::plus<uint64_t>{});
+        bclx::fao_sync(_get_gptr_to_head_of_segment(current_segment),
+                       (uint64_t)1, BCL::plus<uint64_t>{});
     if (head >= SEGMENT_CAPACITY) {
       markable_gptr<segment_t> next_segment = this->_reserve_if_not_marked(
           _get_gptr_to_next_of_segment(current_segment));
-      bclx::compare_and_swap_sync(this->_d_head_segment, current_segment,
-                                  get_ptr(next_segment));
+      bclx::cas_sync(this->_d_head_segment, current_segment,
+                     get_ptr(next_segment));
       if (get_ptr(next_segment) == nullptr) {
         this->_release_hazard_pointer(current_segment);
         return false;
@@ -227,7 +227,7 @@ public:
     if (data_ptr == BOTTOM_PTR) {
       return false;
     }
-    *output = bclx::rread_sync(data_ptr);
+    bclx::rread_sync(data_ptr, output, 1);
     return true;
   }
 
@@ -379,10 +379,11 @@ private:
     }
     bclx::aput_sync(get_ptr(m_ptr), this->_d_hazard_pointers + hazard_slot);
     markable_gptr<segment_t> m_ptr_again;
-    while ((m_ptr_again = bclx::aget_sync(ptr)) != m_ptr) {
+    while ((m_ptr_again = bclx::aget_sync(ptr))._inner != m_ptr._inner) {
       m_ptr = m_ptr_again;
       if (get_marker(m_ptr)) {
-        bclx::aput_sync(nullptr, this->_d_hazard_pointers + hazard_slot);
+        bclx::aput_sync(create_nullptr<segment_t>(),
+                        this->_d_hazard_pointers + hazard_slot);
         return m_ptr;
       }
       bclx::aput_sync(get_ptr(m_ptr), this->_d_hazard_pointers + hazard_slot);
@@ -397,9 +398,10 @@ private:
     bclx::gptr<segment_t> ptr0 = bclx::aget_sync(this->_d_hazard_pointers);
     bclx::gptr<segment_t> ptr1 = bclx::aget_sync(this->_d_hazard_pointers + 1);
     if (ptr0 == ptr) {
-      bclx::aput_sync(nullptr, this->_d_hazard_pointers);
+      bclx::aput_sync(create_nullptr<segment_t>(), this->_d_hazard_pointers);
     } else if (ptr1 == ptr) {
-      bclx::aput_sync(nullptr, this->_d_hazard_pointers + 1);
+      bclx::aput_sync(create_nullptr<segment_t>(),
+                      this->_d_hazard_pointers + 1);
     } else {
       printf("release a non-reserved pointer!");
       exit(1);
