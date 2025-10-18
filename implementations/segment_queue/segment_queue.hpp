@@ -214,7 +214,6 @@ public:
       }
       if (get_marker(next_segment)) {
         this->_release_hazard_pointer(current_segment);
-        this->_release_hazard_pointer(get_ptr(next_segment));
         goto retry;
       }
       this->_release_hazard_pointer(current_segment);
