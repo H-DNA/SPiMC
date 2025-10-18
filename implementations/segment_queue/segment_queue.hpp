@@ -285,8 +285,9 @@ private:
         break;
       }
     }
+    bclx::gptr<segment_t> next_segment = get_ptr(bclx::aget_sync(_get_gptr_to_next_of_segment(last_marked_segment)));
     this->_mark_and_free_upto(last_marked_segment);
-    this->_e_head_segment = last_marked_segment;
+    this->_e_head_segment = next_segment;
   }
 
   void _mark_and_free_upto(bclx::gptr<segment_t> ptr) {
