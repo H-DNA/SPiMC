@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <bclx/bclx.hpp>
 #include <cstdint>
+#include <cstdio>
 #include <mpi.h>
 #include <vector>
 
@@ -284,8 +285,16 @@ private:
     this->_free_list = dlist_temp;
   }
 
-  bclx::gptr<segment_t> _reserve(bclx::gptr<bclx::gptr<segment_t>> pptr,
-                                 int hazard_slot) {
+  bclx::gptr<segment_t> _reserve(bclx::gptr<bclx::gptr<segment_t>> pptr) {
+    int hazard_slot;
+    if (bclx::aget_sync(this->_d_hazard_pointers) == nullptr) {
+      hazard_slot = 0;
+    } else if (bclx::aget_sync(this->_d_hazard_pointers + 1) == nullptr) {
+      hazard_slot = 1;
+    } else {
+      printf("calling reserve without empty hazard slot!");
+      exit(1);
+    }
     bclx::gptr<segment_t> ptr = bclx::aget_sync(pptr);
     if (ptr == nullptr) {
       return nullptr;
@@ -303,8 +312,16 @@ private:
   }
 
   markable_gptr<segment_t>
-  _reserve_if_not_marked(bclx::gptr<markable_gptr<segment_t>> ptr,
-                         int hazard_slot) {
+  _reserve_if_not_marked(bclx::gptr<markable_gptr<segment_t>> ptr) {
+    int hazard_slot;
+    if (bclx::aget_sync(this->_d_hazard_pointers) == nullptr) {
+      hazard_slot = 0;
+    } else if (bclx::aget_sync(this->_d_hazard_pointers + 1) == nullptr) {
+      hazard_slot = 1;
+    } else {
+      printf("calling reserve without empty hazard slot!");
+      exit(1);
+    }
     markable_gptr<segment_t> m_ptr = bclx::aget_sync(ptr);
     if (get_marker(m_ptr)) {
       return m_ptr;
