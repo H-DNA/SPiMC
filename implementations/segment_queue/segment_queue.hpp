@@ -22,11 +22,14 @@ template <typename T> struct markable_gptr {
 };
 
 template <typename T> bool get_marker(markable_gptr<T> ptr) {
-  return ptr._inner & (uint64_t)1;
+  return ptr._inner.ptr & (uint64_t)1;
 }
 
 template <typename T> bclx::gptr<T> get_ptr(markable_gptr<T> ptr) {
-  return ptr._inner & ~(uint64_t)1;
+  bclx::gptr<T> res;
+  res.ptr = ptr._inner.ptr & ~(uint64_t)1;
+  res.rank = ptr._inner.rank;
+  return res;
 }
 
 template <typename T>
