@@ -40,6 +40,13 @@ markable_gptr<T> create_markable_ptr(bclx::gptr<T> ptr, bool marker = false) {
   return markable_gptr<T>{ptr};
 }
 
+template <typename T> bclx::gptr<T> create_nullptr() {
+  bclx::gptr<T> ptr;
+  ptr.rank = 0;
+  ptr.ptr = 0;
+  return ptr;
+}
+
 template <typename data_t> class SegmentQueue {
   static constexpr MPI_Aint SEGMENT_CAPACITY = 2048;
   inline static const bclx::gptr<data_t> BOTTOM_PTR = nullptr;
@@ -172,7 +179,7 @@ public:
                                                get_marker(bclx::aget_sync(
                                                    _get_gptr_to_next_of_segment(
                                                        this->_tail_segment)))),
-          _get_gptr_to_tail_of_segment(this->_tail_segment));
+          _get_gptr_to_next_of_segment(this->_tail_segment));
     }
     bclx::aput_sync(tail + 1,
                     _get_gptr_to_tail_of_segment(this->_tail_segment));
@@ -233,7 +240,7 @@ private:
 
       bclx::gptr<segment_t> current_segment;
       if (last_marked_segment == nullptr) {
-        current_segment = bclx::aget_sync(this->_e_head_segment);
+        current_segment = this->_e_head_segment;
       } else {
         current_segment = get_ptr(
             bclx::aget_sync(_get_gptr_to_next_of_segment(last_marked_segment)));
@@ -263,7 +270,7 @@ private:
         for (int i = 0; i < SEGMENT_CAPACITY; ++i) {
           new_segment.local()->data[i] = BOTTOM_PTR;
         }
-        bclx::aput_sync(nullptr, this->_d_head_segment);
+        bclx::aput_sync(create_nullptr<segment_t>(), this->_d_head_segment);
         this->_mark_and_free_upto(last_marked_segment);
         bclx::aput_sync(new_segment, this->_d_head_segment);
         this->_tail_segment = new_segment;
@@ -272,7 +279,7 @@ private:
       }
 
       if (bclx::cas_sync(this->_d_head_segment, old_head_segment,
-                         get_ptr(last_marked_next))) {
+                         get_ptr(last_marked_next)) == old_head_segment) {
         break;
       }
     }
@@ -314,7 +321,8 @@ private:
     MPI_Win_flush_all(BCL::win);
     std::vector<bclx::gptr<segment_t>> dlist_temp;
     while (this->_free_list.size() > 0) {
-      bclx::gptr<segment_t> ptr = this->_free_list.pop_back();
+      bclx::gptr<segment_t> ptr = this->_free_list.back();
+      this->_free_list.pop_back();
       if (std::find(list_temp.begin(), list_temp.end(), ptr) !=
           list_temp.end()) {
         dlist_temp.push_back(ptr);
