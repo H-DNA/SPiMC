@@ -332,7 +332,7 @@ private:
         BCL::dealloc(ptr);
       }
     }
-    this->_free_list = dlist_temp;
+    this->_free_list = std::move(dlist_temp);
   }
 
   bclx::gptr<segment_t> _reserve(bclx::gptr<bclx::gptr<segment_t>> pptr) {
