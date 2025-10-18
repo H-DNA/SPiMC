@@ -4,6 +4,7 @@
 #include <bclx/bclx.hpp>
 #include <cstdint>
 #include <cstdio>
+#include <iostream>
 #include <mpi.h>
 #include <vector>
 
@@ -96,8 +97,7 @@ public:
           new bclx::gptr<bclx::gptr<segment_t>>[this->_size];
       for (int i = 0; i < this->_size; ++i) {
         bclx::gptr<bclx::gptr<segment_t>> tmp = this->_d_hazard_pointers;
-        this->_e_hazard_pointers[i] =
-            BCL::broadcast(tmp, i);
+        this->_e_hazard_pointers[i] = BCL::broadcast(tmp, i);
       }
     } else {
       this->_tail_segment = nullptr;
@@ -182,6 +182,7 @@ public:
                                                    _get_gptr_to_next_of_segment(
                                                        this->_tail_segment)))),
           _get_gptr_to_next_of_segment(this->_tail_segment));
+      this->_tail_segment = new_segment;
     }
     bclx::aput_sync(tail + 1,
                     _get_gptr_to_tail_of_segment(this->_tail_segment));
