@@ -28,7 +28,7 @@ void run_example() {
     // Enqueue a poison pill for each consumer
     for (int i = 0; i < size - 1; ++i) {
       if (queue.enqueue(poison_pill)) {
-        std::cout << "-- Enqueue " << i << std::endl;
+        std::cout << "-- Enqueue " << poison_pill << std::endl;
       }
     }
   } else {
