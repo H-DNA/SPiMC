@@ -95,8 +95,9 @@ public:
       this->_e_hazard_pointers =
           new bclx::gptr<bclx::gptr<segment_t>>[this->_size];
       for (int i = 0; i < this->_size; ++i) {
+        bclx::gptr<bclx::gptr<segment_t>> tmp = this->_d_hazard_pointers;
         this->_e_hazard_pointers[i] =
-            BCL::broadcast(this->_d_hazard_pointers, i);
+            BCL::broadcast(tmp, i);
       }
     } else {
       this->_tail_segment = nullptr;
@@ -109,7 +110,8 @@ public:
       this->_d_hazard_pointers.local()[0] = nullptr;
       this->_d_hazard_pointers.local()[1] = nullptr;
       for (int i = 0; i < this->_size; ++i) {
-        BCL::broadcast(this->_d_hazard_pointers, i);
+        bclx::gptr<bclx::gptr<segment_t>> tmp = this->_d_hazard_pointers;
+        BCL::broadcast(tmp, i);
       }
     }
   }
