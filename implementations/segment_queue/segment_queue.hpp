@@ -220,9 +220,9 @@ public:
       current_segment = get_ptr(next_segment);
       goto next;
     }
-    this->_release_hazard_pointer(current_segment);
     bclx::gptr<data_t> data_ptr = bclx::swap_sync(
         _get_gptr_to_data_of_segment(current_segment) + head, TOP_PTR);
+    this->_release_hazard_pointer(current_segment);
     if (data_ptr == BOTTOM_PTR) {
       return false;
     }
