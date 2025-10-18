@@ -4,6 +4,7 @@
 #include <bclx/bclx.hpp>
 #include <cstring>
 #include <iostream>
+#include <ostream>
 
 void print_usage(const char *prog_name) {
   std::cout << "Usage: " << prog_name << " [option]\n"
@@ -20,21 +21,26 @@ void run_example() {
   if (rank == 0) {
     SegmentQueue<int> queue(0, MPI_COMM_WORLD);
     for (int i = 0; i < 50; ++i) {
-      queue.enqueue(i);
+      if (queue.enqueue(i)) {
+        std::cout << "-- Enqueue " << i << std::endl;
+      }
     }
     // Enqueue a poison pill for each consumer
     for (int i = 0; i < size - 1; ++i) {
-      queue.enqueue(poison_pill);
+      if (queue.enqueue(poison_pill)) {
+        std::cout << "-- Enqueue " << i << std::endl;
+      }
     }
   } else {
     SegmentQueue<int> queue(0, MPI_COMM_WORLD);
     while (true) {
       int value;
       if (queue.dequeue(&value)) {
+        std::cout << "Rank " << rank << ": dequeue " << value << std::endl;
+        // Stop if a poison pill is dequeued
         if (value == poison_pill) {
           break;
         }
-        // Process the value
       }
     }
   }
