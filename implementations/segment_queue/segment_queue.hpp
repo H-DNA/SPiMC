@@ -419,7 +419,7 @@ private:
     return next_ptr;
   }
 
-  inline bclx::gptr<uint64_t>
+  inline bclx::gptr<bclx::gptr<data_t>>
   _get_gptr_to_data_of_segment(bclx::gptr<segment_t> ptr) {
     bclx::gptr<bclx::gptr<data_t>> data_ptr;
     data_ptr.rank = ptr.rank;
