@@ -284,6 +284,24 @@ private:
     this->_free_list = dlist_temp;
   }
 
+  bclx::gptr<segment_t> _reserve(bclx::gptr<bclx::gptr<segment_t>> pptr,
+                                 int hazard_slot) {
+    bclx::gptr<segment_t> ptr = bclx::aget_sync(pptr);
+    if (ptr == nullptr) {
+      return nullptr;
+    }
+    bclx::aput_sync(ptr, this->_d_hazard_pointers + hazard_slot);
+    bclx::gptr<segment_t> ptr_again;
+    while ((ptr_again = bclx::aget_sync(pptr)) != ptr) {
+      ptr = ptr_again;
+      bclx::aput_sync(ptr, this->_d_hazard_pointers + hazard_slot);
+      if (ptr == nullptr) {
+        return nullptr;
+      }
+    }
+    return ptr;
+  }
+
   markable_gptr<segment_t>
   _reserve_if_not_marked(bclx::gptr<markable_gptr<segment_t>> ptr,
                          int hazard_slot) {
