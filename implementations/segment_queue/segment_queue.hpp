@@ -4,7 +4,6 @@
 #include <bclx/bclx.hpp>
 #include <cstdint>
 #include <cstdio>
-#include <iostream>
 #include <mpi.h>
 #include <vector>
 
@@ -182,6 +181,10 @@ public:
                                                    _get_gptr_to_next_of_segment(
                                                        this->_tail_segment)))),
           _get_gptr_to_next_of_segment(this->_tail_segment));
+      if (bclx::aget_sync(_get_gptr_to_head_of_segment(this->_tail_segment)) >=
+          SEGMENT_CAPACITY) {
+        bclx::aput_sync(new_segment, this->_d_head_segment);
+      }
       this->_tail_segment = new_segment;
     }
     bclx::aput_sync(tail + 1,
@@ -285,7 +288,8 @@ private:
         break;
       }
     }
-    bclx::gptr<segment_t> next_segment = get_ptr(bclx::aget_sync(_get_gptr_to_next_of_segment(last_marked_segment)));
+    bclx::gptr<segment_t> next_segment = get_ptr(
+        bclx::aget_sync(_get_gptr_to_next_of_segment(last_marked_segment)));
     this->_mark_and_free_upto(last_marked_segment);
     this->_e_head_segment = next_segment;
   }
