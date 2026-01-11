@@ -17,4 +17,4 @@ This project prototypes a porting direction for a student group studying SPMC qu
 
 ## Related Work
 
-See [MPiSC](../MPiSC) for the completed MPSC queue porting project, which uses the same methodology and serves as the foundation for this work.
+See [MPiSC](https://github.com/H-DNA/MPiSC) for the completed MPSC queue porting project, which uses the same methodology and serves as the foundation for this work.
